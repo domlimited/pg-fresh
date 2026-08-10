@@ -1,0 +1,19 @@
+export const IPC_CHANNELS = {
+  PROGRAM_UPDATE: 'program:update',
+  TIMECODE_SYNC: 'program:timecode',
+  OUTPUT_SET_BLACK: 'output:set-black',
+  OUTPUT_SET_FREEZE: 'output:set-freeze',
+  MEDIA_LIST: 'media:list',
+  MEDIA_IMPORT_DIALOG: 'media:import-dialog',
+  MEDIA_IMPORT_PATHS: 'media:import-paths',
+  MEDIA_REMOVE: 'media:remove',
+  MEDIA_LIBRARY_UPDATE: 'media:library-update',
+  PRESET_LIST: 'preset:list',
+  PRESET_SAVE: 'preset:save',
+  PRESET_CLEAR: 'preset:clear',
+  SETTINGS_GET_RESOLUTION: 'settings:get-resolution',
+  SETTINGS_SET_RESOLUTION: 'settings:set-resolution',
+  SETTINGS_RESOLUTION_UPDATE: 'settings:resolution-update',
+  STREAM_START: 'stream:start',
+  STREAM_STOP: 'stream:stop'
+} as const
