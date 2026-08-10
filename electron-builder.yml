@@ -1,0 +1,22 @@
+appId: com.fresh.app
+productName: FRESH
+directories:
+  buildResources: resources
+files:
+  - out/**/*
+  - package.json
+asarUnpack:
+  - '**/*.node'
+  - node_modules/ffmpeg-static/**
+  - node_modules/@ffprobe-installer/**
+win:
+  target: nsis
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.video
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: '${productName} Setup ${version}-${arch}.${ext}'

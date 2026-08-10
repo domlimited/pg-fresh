@@ -1,0 +1,18 @@
+node_modules
+out
+dist
+dist-electron
+release
+*.log
+.DS_Store
+.env
+*.local
+resources/thumbnails
+*.sqlite
+*.sqlite3
+*.tsbuildinfo
+builder-debug.yml
+builder-effective-config.yaml
+
+# Internal planning/roadmap notes — not meant for the shared repo
+docs/
