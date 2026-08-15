@@ -1,6 +1,6 @@
 {
   "name": "fresh",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "FRESH — LED Screen Media Controller & Presenter",
   "main": "./out/main/index.js",
   "author": "",
@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "build:unpack": "electron-vite build && electron-builder --dir",
     "build:mac": "electron-vite build && electron-builder --mac",
-    "build:win": "electron-vite build && electron-builder --win"
+    "fetch:win-binaries": "npm install --no-save --force @ffprobe-installer/win32-x64 && cd node_modules/ffmpeg-static && npm_config_platform=win32 npm_config_arch=x64 node install.js",
+    "build:win": "npm run fetch:win-binaries && electron-vite build && electron-builder --win"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
