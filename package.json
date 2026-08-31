@@ -1,6 +1,6 @@
 {
   "name": "fresh",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "FRESH — LED Screen Media Controller & Presenter",
   "main": "./out/main/index.js",
   "author": "",
