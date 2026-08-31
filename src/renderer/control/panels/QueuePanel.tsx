@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { Film, Image as ImageIcon, Play, Repeat, SkipForward, Trash2 } from 'lucide-react'
 import type { MediaItem } from '@common/types/media'
-import { getVideoElement } from '@shared/canvas-engine/videoRegistry'
+import { previewVideoRegistry } from '@shared/canvas-engine/videoRegistry'
 import { QUEUE_LAYER_ID } from '@shared/canvas-engine/constants'
 import { useQueueStore } from '@shared/store/queueStore'
 import { toMediaUrl } from '@shared/utils/mediaUrl'
@@ -36,7 +36,7 @@ export function QueuePanel(): JSX.Element {
     }
 
     const interval = setInterval(() => {
-      const el = getVideoElement(QUEUE_LAYER_ID)
+      const el = previewVideoRegistry.get(QUEUE_LAYER_ID)
       if (el?.ended) advanceQueue()
     }, VIDEO_END_POLL_MS)
     return () => clearInterval(interval)

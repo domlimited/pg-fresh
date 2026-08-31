@@ -4,10 +4,12 @@ import { useProgramStore } from '../store/programStore'
 import { useTimecodeSyncStore } from '../store/timecodeSyncStore'
 import { toMediaUrl } from '../utils/mediaUrl'
 import { applyAudioSettings } from './audio'
-import { registerVideoElement } from './videoRegistry'
+import { getCropClipPath, getMediaObjectFit } from './layerStyle'
+import { programVideoRegistry } from './videoRegistry'
 
 interface OutputVideoLayerProps {
   layer: Layer
+  muteAudio?: boolean
 }
 
 const DRIFT_TOLERANCE_SEC = 0.3
@@ -15,14 +17,14 @@ const DRIFT_TOLERANCE_SEC = 0.3
 // Each window opens its own MediaStream/decoder for the same file — a
 // MediaStream/video frame can't cross the IPC boundary — so playback state
 // is kept in sync via periodic timecode messages from Control instead.
-export function OutputVideoLayer({ layer }: OutputVideoLayerProps): JSX.Element {
+export function OutputVideoLayer({ layer, muteAudio = false }: OutputVideoLayerProps): JSX.Element {
   const ref = useRef<HTMLVideoElement>(null)
   const sync = useTimecodeSyncStore((s) => s.syncs[layer.id])
   const freeze = useProgramStore((s) => s.freeze)
 
   useEffect(() => {
-    registerVideoElement(layer.id, ref.current)
-    return () => registerVideoElement(layer.id, null)
+    programVideoRegistry.register(layer.id, ref.current)
+    return () => programVideoRegistry.register(layer.id, null)
   }, [layer.id])
 
   useEffect(() => {
@@ -47,15 +49,20 @@ export function OutputVideoLayer({ layer }: OutputVideoLayerProps): JSX.Element 
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    if (muteAudio) {
+      el.muted = true
+      return
+    }
     void applyAudioSettings(el, layer)
-  }, [layer.volume, layer.muted, layer.audioOutputId])
+  }, [muteAudio, layer.volume, layer.muted, layer.audioOutputId])
 
   return (
     <video
       ref={ref}
       src={layer.mediaPath ? toMediaUrl(layer.mediaPath) : undefined}
       loop={layer.loop}
-      className="pointer-events-none h-full w-full object-cover"
+      className="pointer-events-none h-full w-full"
+      style={{ objectFit: getMediaObjectFit(layer), clipPath: getCropClipPath(layer) }}
     />
   )
 }

@@ -17,7 +17,9 @@ export function UrlSourcePanel(): JSX.Element {
   }
 
   return (
-    <div className="flex shrink-0 items-center gap-2 border-t border-neutral-800 bg-neutral-900 px-3 py-2">
+    <div className="flex h-full flex-col gap-2 px-1">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">เว็บ / สตรีม</h2>
+      <div className="flex items-center gap-2">
       <Link2 className="h-3.5 w-3.5 shrink-0 text-neutral-500" />
       <input
         value={url}
@@ -33,6 +35,7 @@ export function UrlSourcePanel(): JSX.Element {
         <Plus className="h-3.5 w-3.5" />
         Add
       </button>
+      </div>
     </div>
   )
 }

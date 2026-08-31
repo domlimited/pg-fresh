@@ -1,5 +1,6 @@
 import type { Layer } from '@common/types/scene'
 import { toMediaUrl } from '../utils/mediaUrl'
+import { getCropClipPath, getMediaObjectFit } from './layerStyle'
 
 interface LayerContentProps {
   layer: Layer
@@ -14,7 +15,8 @@ export function LayerContent({ layer }: LayerContentProps): JSX.Element {
       <img
         src={toMediaUrl(layer.mediaPath)}
         draggable={false}
-        className="pointer-events-none h-full w-full object-cover"
+        className="pointer-events-none h-full w-full"
+        style={{ objectFit: getMediaObjectFit(layer), clipPath: getCropClipPath(layer) }}
       />
     )
   }

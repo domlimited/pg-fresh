@@ -34,13 +34,9 @@ export function MediaLibrary(): JSX.Element {
   }
 
   return (
-    <div
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
-      className="flex h-48 shrink-0 flex-col border-t border-neutral-800 bg-neutral-900"
-    >
-      <div className="flex items-center justify-between px-3 py-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Media Library</h2>
+    <div onDragOver={(e) => e.preventDefault()} onDrop={handleDrop} className="flex h-full flex-col">
+      <div className="flex items-center justify-between px-1 pb-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">รูปภาพ / วิดีโอ</h2>
         <button
           onClick={handleImportClick}
           className="flex items-center gap-1 rounded bg-neutral-800 px-2 py-1 text-xs text-neutral-200 hover:bg-neutral-700"
@@ -50,20 +46,20 @@ export function MediaLibrary(): JSX.Element {
         </button>
       </div>
 
-      <div className="flex-1 overflow-x-auto overflow-y-hidden px-3 pb-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-2">
         {items.length === 0 ? (
           <p className="py-4 text-xs text-neutral-600">
             Import files or drag &amp; drop video/image files here
           </p>
         ) : (
-          <div className="flex h-full gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {items.map((item) => (
               <div
                 key={item.id}
                 draggable
                 onDragStart={(e) => handleDragStart(e, item)}
                 title={item.name}
-                className="relative flex w-28 shrink-0 cursor-grab flex-col overflow-hidden rounded border border-neutral-800 bg-neutral-950"
+                className="relative flex cursor-grab flex-col overflow-hidden rounded border border-neutral-800 bg-neutral-950"
               >
                 <div className="relative flex h-16 items-center justify-center bg-black">
                   {item.thumbnailPath ? (

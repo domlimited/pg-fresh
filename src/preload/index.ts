@@ -6,6 +6,8 @@ import type { Layer, ProgramUpdatePayload, TimecodeSyncPayload } from '@common/t
 import type { MediaItem } from '@common/types/media'
 import type { Preset } from '@common/types/preset'
 import type { CanvasResolution } from '@common/types/settings'
+import type { DisplayInfo, OutputStatus } from '@common/types/display'
+import type { CaptureSourceList } from '@common/types/capture'
 
 const freshAPI = {
   appVersion: (): string => electronAPI.process.versions.electron ?? 'unknown',
@@ -102,7 +104,24 @@ const freshAPI = {
 
   stopStream: (streamId: string): void => {
     ipcRenderer.send(IPC_CHANNELS.STREAM_STOP, streamId)
-  }
+  },
+
+  listDisplays: (): Promise<DisplayInfo[]> => ipcRenderer.invoke(IPC_CHANNELS.DISPLAY_LIST),
+
+  activateOutput: (displayId: number): Promise<OutputStatus> =>
+    ipcRenderer.invoke(IPC_CHANNELS.OUTPUT_ACTIVATE, displayId),
+
+  deactivateOutput: (): Promise<OutputStatus> => ipcRenderer.invoke(IPC_CHANNELS.OUTPUT_DEACTIVATE),
+
+  onOutputStatusUpdate: (callback: (status: OutputStatus) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, status: OutputStatus): void => callback(status)
+    ipcRenderer.on(IPC_CHANNELS.OUTPUT_STATUS_UPDATE, listener)
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.OUTPUT_STATUS_UPDATE, listener)
+  },
+
+  listScreenSources: (): Promise<CaptureSourceList> => ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_LIST_SCREENS),
+
+  listWindowSources: (): Promise<CaptureSourceList> => ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_LIST_WINDOWS)
 }
 
 contextBridge.exposeInMainWorld('electron', electronAPI)

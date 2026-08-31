@@ -61,6 +61,44 @@ export function startStream(streamId: string, sourceUrl: string): string {
   return playlistPath
 }
 
+const KILL_TIMEOUT_MS = 1500
+
+// SIGKILL is sent asynchronously — the OS hasn't necessarily released the
+// process's file handles (ffmpeg-static's binary included) by the time
+// command.kill() returns, so wait for the process to actually report back
+// before resolving instead of assuming it's gone immediately.
+function killAndWait(streamId: string, entry: StreamEntry): Promise<void> {
+  return new Promise((resolve) => {
+    let settled = false
+    const done = (): void => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      try {
+        rmSync(getHlsDir(streamId), { recursive: true, force: true })
+      } catch {
+        // best-effort cleanup
+      }
+      resolve()
+    }
+    entry.command.once('error', done)
+    entry.command.once('end', done)
+    entry.command.kill('SIGKILL')
+    const timer = setTimeout(done, KILL_TIMEOUT_MS)
+  })
+}
+
+// Called from app 'before-quit' — a still-running ffmpeg child process has
+// been one of the suspects behind the Windows installer failing to fully
+// remove/replace files (ffmpeg-static's binary) during uninstall/upgrade.
+// Returns a promise so the caller can delay app.quit() until every process
+// has actually exited, not just been signaled.
+export function stopAllStreams(): Promise<void> {
+  const entries = [...activeStreams.entries()]
+  activeStreams.clear()
+  return Promise.all(entries.map(([streamId, entry]) => killAndWait(streamId, entry))).then(() => undefined)
+}
+
 export function stopStream(streamId: string): void {
   const entry = activeStreams.get(streamId)
   if (!entry) return

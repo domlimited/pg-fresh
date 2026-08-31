@@ -3,10 +3,12 @@ import { useEffect, useRef } from 'react'
 import type { Layer } from '@common/types/scene'
 import { toMediaUrl } from '../utils/mediaUrl'
 import { applyAudioSettings } from './audio'
+import { getCropClipPath, getMediaObjectFit } from './layerStyle'
 
 interface StreamLayerProps {
   layer: Layer
   role: 'control' | 'output'
+  muteAudio?: boolean
 }
 
 // RTSP/RTMP can't be played directly by Chromium — the main process
@@ -14,7 +16,7 @@ interface StreamLayerProps {
 // this component points hls.js at it via the media:// protocol. Control and
 // Output each call startStream() for the same layer id; the main process
 // ref-counts so only one ffmpeg process actually runs per source.
-export function StreamLayer({ layer, role }: StreamLayerProps): JSX.Element {
+export function StreamLayer({ layer, role, muteAudio = false }: StreamLayerProps): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<Hls | null>(null)
 
@@ -51,14 +53,20 @@ export function StreamLayer({ layer, role }: StreamLayerProps): JSX.Element {
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
-    if (role === 'control') {
+    if (role === 'control' || muteAudio) {
       el.muted = true
       return
     }
     void applyAudioSettings(el, layer)
-  }, [role, layer.volume, layer.muted, layer.audioOutputId])
+  }, [role, muteAudio, layer.volume, layer.muted, layer.audioOutputId])
 
   return (
-    <video ref={videoRef} autoPlay playsInline className="pointer-events-none h-full w-full object-cover" />
+    <video
+      ref={videoRef}
+      autoPlay
+      playsInline
+      className="pointer-events-none h-full w-full"
+      style={{ objectFit: getMediaObjectFit(layer), clipPath: getCropClipPath(layer) }}
+    />
   )
 }

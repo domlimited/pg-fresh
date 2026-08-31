@@ -1,4 +1,13 @@
-export type SourceType = 'placeholder' | 'video' | 'image' | 'camera' | 'webview' | 'stream'
+export type SourceType = 'placeholder' | 'video' | 'image' | 'camera' | 'webview' | 'stream' | 'screen'
+
+export type FitMode = 'contain' | 'cover' | 'stretch'
+
+export interface LayerCrop {
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
 
 export interface Layer {
   id: string
@@ -22,6 +31,10 @@ export interface Layer {
   volume?: number
   muted?: boolean
   audioOutputId?: string
+  // Undefined means the pre-v3 default: no crop, fit 'cover' — see
+  // getMediaObjectFit()/getCropClipPath() in canvas-engine/layerStyle.ts.
+  crop?: LayerCrop
+  fit?: FitMode
 }
 
 export type TakeMode = 'cut' | 'fade'

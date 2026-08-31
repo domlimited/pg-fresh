@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Pause, Play, Repeat, Square, Volume2, VolumeX } from 'lucide-react'
 import type { SourceType } from '@common/types/scene'
-import { getVideoElement } from '@shared/canvas-engine/videoRegistry'
+import { previewVideoRegistry } from '@shared/canvas-engine/videoRegistry'
 import { useSceneStore } from '@shared/store/sceneStore'
 import { formatTime } from '@shared/utils/time'
 
@@ -35,7 +35,7 @@ export function PlaybackControls(): JSX.Element {
 
   useEffect(() => {
     if (!layer || layer.sourceType !== 'video') return
-    const el = getVideoElement(layer.id)
+    const el = previewVideoRegistry.get(layer.id)
     if (!el) return
 
     const onTimeUpdate = (): void => setCurrentTime(el.currentTime)
@@ -78,7 +78,7 @@ export function PlaybackControls(): JSX.Element {
     )
   }
 
-  const el = getVideoElement(layer.id)
+  const el = previewVideoRegistry.get(layer.id)
 
   function togglePlay(): void {
     if (!el) return

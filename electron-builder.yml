@@ -18,5 +18,7 @@ mac:
   category: public.app-category.video
 nsis:
   oneClick: false
+  perMachine: true
   allowToChangeInstallationDirectory: true
+  guid: '6f6d9c2e-6a3d-4b8a-9b3a-2a6a7c2e9f11'
   artifactName: '${productName} Setup ${version}-${arch}.${ext}'

@@ -1,17 +1,19 @@
 import { useEffect, useRef } from 'react'
 import type { Layer } from '@common/types/scene'
 import { applyAudioSettings } from './audio'
+import { getCropClipPath, getMediaObjectFit } from './layerStyle'
 
 interface CameraLayerProps {
   layer: Layer
   role: 'control' | 'output'
+  muteAudio?: boolean
 }
 
 // Each window (Control and Output) opens its own getUserMedia stream for
 // the same deviceId — a MediaStream can't cross the IPC boundary, but
 // unlike video files there's no playhead to keep in sync: the camera feed
 // is inherently live in both places already.
-export function CameraLayer({ layer, role }: CameraLayerProps): JSX.Element {
+export function CameraLayer({ layer, role, muteAudio = false }: CameraLayerProps): JSX.Element {
   const ref = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -44,12 +46,20 @@ export function CameraLayer({ layer, role }: CameraLayerProps): JSX.Element {
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    if (role === 'control') {
+    if (role === 'control' || muteAudio) {
       el.muted = true
       return
     }
     void applyAudioSettings(el, layer)
-  }, [role, layer.volume, layer.muted, layer.audioOutputId])
+  }, [role, muteAudio, layer.volume, layer.muted, layer.audioOutputId])
 
-  return <video ref={ref} autoPlay playsInline className="pointer-events-none h-full w-full object-cover" />
+  return (
+    <video
+      ref={ref}
+      autoPlay
+      playsInline
+      className="pointer-events-none h-full w-full"
+      style={{ objectFit: getMediaObjectFit(layer), clipPath: getCropClipPath(layer) }}
+    />
+  )
 }

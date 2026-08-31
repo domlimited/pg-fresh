@@ -15,5 +15,11 @@ export const IPC_CHANNELS = {
   SETTINGS_SET_RESOLUTION: 'settings:set-resolution',
   SETTINGS_RESOLUTION_UPDATE: 'settings:resolution-update',
   STREAM_START: 'stream:start',
-  STREAM_STOP: 'stream:stop'
+  STREAM_STOP: 'stream:stop',
+  DISPLAY_LIST: 'display:list',
+  OUTPUT_ACTIVATE: 'output:activate',
+  OUTPUT_DEACTIVATE: 'output:deactivate',
+  OUTPUT_STATUS_UPDATE: 'output:status-update',
+  CAPTURE_LIST_SCREENS: 'capture:list-screens',
+  CAPTURE_LIST_WINDOWS: 'capture:list-windows'
 } as const

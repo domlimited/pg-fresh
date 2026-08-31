@@ -1,5 +1,6 @@
 import { useSceneStore } from '@shared/store/sceneStore'
 import { useQueueStore } from '@shared/store/queueStore'
+import { useTransitionStore } from '@shared/store/transitionStore'
 import { takeProgram } from './programActions'
 
 export function playQueueIndex(index: number): void {
@@ -9,7 +10,8 @@ export function playQueueIndex(index: number): void {
 
   queue.setCurrentIndex(index)
   useSceneStore.getState().setQueueLayer(item)
-  takeProgram(useSceneStore.getState().layers, 'cut')
+  const { mode, fadeMs } = useTransitionStore.getState()
+  takeProgram(useSceneStore.getState().layers, mode, fadeMs)
 }
 
 export function advanceQueue(): void {

@@ -6,6 +6,7 @@ import { useResolutionStore } from '@shared/store/resolutionStore'
 import { useSceneStore } from '@shared/store/sceneStore'
 import type { MediaItem } from '@common/types/media'
 import { CAMERA_DRAG_TYPE } from './CameraPanel'
+import { CAPTURE_DRAG_TYPE } from './CapturePanel'
 
 const MEDIA_DRAG_TYPE = 'application/x-fresh-media'
 
@@ -19,6 +20,7 @@ export function PreviewCanvas(): JSX.Element {
   const updateLayer = useSceneStore((s) => s.updateLayer)
   const addMediaLayer = useSceneStore((s) => s.addMediaLayer)
   const addCameraLayer = useSceneStore((s) => s.addCameraLayer)
+  const addScreenCaptureLayer = useSceneStore((s) => s.addScreenCaptureLayer)
 
   return (
     <Stage
@@ -36,6 +38,11 @@ export function PreviewCanvas(): JSX.Element {
         const cameraJson = dataTransfer.getData(CAMERA_DRAG_TYPE)
         if (cameraJson) {
           addCameraLayer(JSON.parse(cameraJson), x, y)
+          return
+        }
+        const captureJson = dataTransfer.getData(CAPTURE_DRAG_TYPE)
+        if (captureJson) {
+          addScreenCaptureLayer(JSON.parse(captureJson), x, y)
         }
       }}
     >

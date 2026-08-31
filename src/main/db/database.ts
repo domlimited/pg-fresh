@@ -20,6 +20,14 @@ export function getDatabase(): Database.Database {
   return db
 }
 
+// Called from app 'before-quit' — an open handle here has been one of the
+// suspects behind the Windows installer failing to fully remove/replace
+// files during uninstall/upgrade.
+export function closeDatabase(): void {
+  db?.close()
+  db = null
+}
+
 function runMigrations(database: Database.Database): void {
   database.exec(`
     CREATE TABLE IF NOT EXISTS media_library (

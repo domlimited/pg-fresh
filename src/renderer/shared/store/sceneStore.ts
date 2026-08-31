@@ -20,6 +20,11 @@ interface CameraDevice {
   label: string
 }
 
+interface CaptureSourcePick {
+  id: string
+  name: string
+}
+
 interface SceneState {
   layers: Layer[]
   selectedLayerId: string | null
@@ -27,6 +32,7 @@ interface SceneState {
   addLayer: () => void
   addMediaLayer: (item: MediaItem, centerX: number, centerY: number) => void
   addCameraLayer: (device: CameraDevice, centerX: number, centerY: number) => void
+  addScreenCaptureLayer: (source: CaptureSourcePick, centerX: number, centerY: number) => void
   addUrlLayer: (rawUrl: string, centerX: number, centerY: number) => void
   setQueueLayer: (source: QueueLayerSource) => void
   updateLayer: (id: string, patch: Partial<Layer>) => void
@@ -95,6 +101,27 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       name: device.label,
       sourceType: 'camera',
       deviceId: device.deviceId,
+      x: centerX - width / 2,
+      y: centerY - height / 2,
+      width,
+      height,
+      rotation: 0,
+      opacity: 1,
+      zIndex: layers.length
+    }
+    set({ layers: [...layers, layer], selectedLayerId: id })
+  },
+
+  addScreenCaptureLayer: (source, centerX, centerY) => {
+    const layers = get().layers
+    const id = crypto.randomUUID()
+    const width = DEFAULT_MEDIA_LAYER_WIDTH
+    const height = Math.round(width / (16 / 9))
+    const layer: Layer = {
+      id,
+      name: source.name,
+      sourceType: 'screen',
+      deviceId: source.id,
       x: centerX - width / 2,
       y: centerY - height / 2,
       width,

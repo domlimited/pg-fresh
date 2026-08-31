@@ -4,6 +4,7 @@ import type { Layer } from '@common/types/scene'
 interface WebviewLayerProps {
   layer: Layer
   role: 'control' | 'output'
+  muteAudio?: boolean
 }
 
 // Control and Output each load the URL independently in their own
@@ -12,7 +13,7 @@ interface WebviewLayerProps {
 // process from swallowing our drag/resize handles (webview owns its own
 // input otherwise). Volume isn't controllable per-webview by the platform,
 // only mute — Control always stays muted (preview only).
-export function WebviewLayer({ layer, role }: WebviewLayerProps): JSX.Element {
+export function WebviewLayer({ layer, role, muteAudio = false }: WebviewLayerProps): JSX.Element {
   const ref = useRef<Electron.WebviewTag>(null)
   const [ready, setReady] = useState(false)
 
@@ -36,8 +37,8 @@ export function WebviewLayer({ layer, role }: WebviewLayerProps): JSX.Element {
   useEffect(() => {
     const el = ref.current
     if (!el || !ready) return
-    el.setAudioMuted(role === 'control' ? true : (layer.muted ?? false))
-  }, [ready, role, layer.muted])
+    el.setAudioMuted(role === 'control' || muteAudio ? true : (layer.muted ?? false))
+  }, [ready, role, muteAudio, layer.muted])
 
   if (!layer.url) {
     return <div className="h-full w-full bg-neutral-900" />

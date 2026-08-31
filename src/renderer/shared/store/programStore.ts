@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Layer, ProgramUpdatePayload } from '@common/types/scene'
-import { getVideoElement } from '../canvas-engine/videoRegistry'
+import { programVideoRegistry } from '../canvas-engine/videoRegistry'
 
 interface ProgramState {
   current: Layer[]
@@ -49,7 +49,7 @@ export const useProgramStore = create<ProgramState>((set, get) => ({
       // Hold the current frame immediately rather than waiting for the next
       // timecode sync tick — Control keeps playing live underneath.
       for (const layer of get().current) {
-        if (layer.sourceType === 'video') getVideoElement(layer.id)?.pause()
+        if (layer.sourceType === 'video') programVideoRegistry.get(layer.id)?.pause()
       }
     }
   }
