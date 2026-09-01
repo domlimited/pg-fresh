@@ -10,10 +10,10 @@
     "build": "electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-    "build:unpack": "electron-vite build && electron-builder --dir",
-    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:unpack": "electron-vite build && electron-builder --dir --config.npmRebuild=false",
+    "build:mac": "electron-vite build && electron-builder --mac --config.npmRebuild=false",
     "fetch:win-binaries": "npm install --no-save --force @ffprobe-installer/win32-x64 && cd node_modules/ffmpeg-static && npm_config_platform=win32 npm_config_arch=x64 node install.js",
-    "build:win": "npm run fetch:win-binaries && electron-vite build && electron-builder --win"
+    "build:win": "npm run fetch:win-binaries && electron-vite build && electron-builder --win --config.npmRebuild=false"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
