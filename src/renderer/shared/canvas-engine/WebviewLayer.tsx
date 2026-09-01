@@ -44,5 +44,21 @@ export function WebviewLayer({ layer, role, muteAudio = false }: WebviewLayerPro
     return <div className="h-full w-full bg-neutral-900" />
   }
 
-  return <webview ref={ref} src={layer.url} className="pointer-events-none block h-full w-full" />
+  // YouTube's embed player rejects the request with "Error 153" if it
+  // doesn't carry a Referer header it trusts — <webview> navigations from
+  // this app's file://(packaged)/dev-server origin don't send one YouTube
+  // accepts, so every embed fails regardless of the video's own embed
+  // settings. httpreferrer forces one on the initial navigation.
+  const httpReferrer = layer.url.startsWith('https://www.youtube.com/embed/')
+    ? 'https://www.youtube.com/'
+    : undefined
+
+  return (
+    <webview
+      ref={ref}
+      src={layer.url}
+      httpreferrer={httpReferrer}
+      className="pointer-events-none block h-full w-full"
+    />
+  )
 }

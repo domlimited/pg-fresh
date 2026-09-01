@@ -2,11 +2,13 @@ import { useEffect, useState, type DragEvent } from 'react'
 import { FolderOpen, Film, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react'
 import type { MediaItem } from '@common/types/media'
 import { toMediaUrl } from '@shared/utils/mediaUrl'
+import { useSceneStore } from '@shared/store/sceneStore'
 
 const MEDIA_DRAG_TYPE = 'application/x-fresh-media'
 
 export function MediaLibrary(): JSX.Element {
   const [items, setItems] = useState<MediaItem[]>([])
+  const setActiveSource = useSceneStore((s) => s.setActiveSource)
 
   useEffect(() => {
     window.fresh.listMedia().then(setItems)
@@ -58,8 +60,11 @@ export function MediaLibrary(): JSX.Element {
                 key={item.id}
                 draggable
                 onDragStart={(e) => handleDragStart(e, item)}
+                onClick={() =>
+                  setActiveSource({ name: item.name, sourceType: item.kind, mediaId: item.id, mediaPath: item.displayPath })
+                }
                 title={item.name}
-                className="relative flex cursor-grab flex-col overflow-hidden rounded border border-neutral-800 bg-neutral-950"
+                className="relative flex cursor-pointer flex-col overflow-hidden rounded border border-neutral-800 bg-neutral-950 hover:border-cyan-600"
               >
                 <div className="relative flex h-16 items-center justify-center bg-black">
                   {item.thumbnailPath ? (
@@ -86,7 +91,10 @@ export function MediaLibrary(): JSX.Element {
                 </div>
                 <span className="truncate px-1 py-0.5 text-[10px] text-neutral-400">{item.name}</span>
                 <button
-                  onClick={() => handleRemove(item.id)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void handleRemove(item.id)
+                  }}
                   className="absolute right-0.5 top-0.5 rounded bg-black/60 p-0.5 text-neutral-400 hover:text-red-400"
                 >
                   <Trash2 className="h-3 w-3" />

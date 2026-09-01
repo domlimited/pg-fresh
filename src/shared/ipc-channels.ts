@@ -8,9 +8,6 @@ export const IPC_CHANNELS = {
   MEDIA_IMPORT_PATHS: 'media:import-paths',
   MEDIA_REMOVE: 'media:remove',
   MEDIA_LIBRARY_UPDATE: 'media:library-update',
-  PRESET_LIST: 'preset:list',
-  PRESET_SAVE: 'preset:save',
-  PRESET_CLEAR: 'preset:clear',
   SETTINGS_GET_RESOLUTION: 'settings:get-resolution',
   SETTINGS_SET_RESOLUTION: 'settings:set-resolution',
   SETTINGS_RESOLUTION_UPDATE: 'settings:resolution-update',
@@ -19,6 +16,7 @@ export const IPC_CHANNELS = {
   DISPLAY_LIST: 'display:list',
   OUTPUT_ACTIVATE: 'output:activate',
   OUTPUT_DEACTIVATE: 'output:deactivate',
+  OUTPUT_SET_HIDDEN: 'output:set-hidden',
   OUTPUT_STATUS_UPDATE: 'output:status-update',
   CAPTURE_LIST_SCREENS: 'capture:list-screens',
   CAPTURE_LIST_WINDOWS: 'capture:list-windows'

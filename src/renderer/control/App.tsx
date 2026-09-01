@@ -1,20 +1,20 @@
 import { useEffect } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
 import { previewVideoRegistry } from '@shared/canvas-engine/videoRegistry'
 import { useSceneStore } from '@shared/store/sceneStore'
-import { usePresetStore } from '@shared/store/presetStore'
 import { useResolutionStore } from '@shared/store/resolutionStore'
 import { useOutputStatusStore } from '@shared/store/outputStatusStore'
 import { useTimecodeSyncStore } from '@shared/store/timecodeSyncStore'
 import { useTransitionStore } from '@shared/store/transitionStore'
+import { useUiStore } from '@shared/store/uiStore'
 import { TopBar } from './panels/TopBar'
-import { PresetBar } from './panels/PresetBar'
-import { LayerPanel } from './panels/LayerPanel'
 import { PreviewCanvas } from './panels/PreviewCanvas'
 import { PlaybackControls } from './panels/PlaybackControls'
 import { OutputAdjustPanel } from './panels/OutputAdjustPanel'
 import { QueuePanel } from './panels/QueuePanel'
 import { SourceSidebar } from './panels/SourceSidebar'
 import { ProgramMonitorPanel } from './panels/ProgramMonitorPanel'
+import { TakeControls } from './panels/TakeControls'
 import { takeProgram } from './actions/programActions'
 
 const TIMECODE_SYNC_INTERVAL_MS = 500
@@ -26,6 +26,8 @@ function isTypingTarget(target: EventTarget | null): boolean {
 function App(): JSX.Element {
   const layers = useSceneStore((s) => s.layers)
   const loadResolution = useResolutionStore((s) => s.load)
+  const outputAdjustOpen = useUiStore((s) => s.outputAdjustOpen)
+  const toggleOutputAdjust = useUiStore((s) => s.toggleOutputAdjust)
 
   useEffect(() => {
     void loadResolution()
@@ -59,14 +61,6 @@ function App(): JSX.Element {
         e.preventDefault()
         const { mode, fadeMs } = useTransitionStore.getState()
         takeProgram(useSceneStore.getState().layers, mode, fadeMs)
-        return
-      }
-
-      const digitMatch = e.code.match(/^(?:Digit|Numpad)([1-9])$/)
-      if (digitMatch) {
-        const slot = Number(digitMatch[1])
-        const preset = usePresetStore.getState().presets.find((p) => p.slot === slot)
-        if (preset) useSceneStore.getState().loadLayers(preset.layers)
       }
     }
     window.addEventListener('keydown', onKeyDown)
@@ -76,20 +70,41 @@ function App(): JSX.Element {
   return (
     <div className="flex h-full flex-col bg-neutral-950 text-neutral-100">
       <TopBar />
-      <PresetBar />
       <div className="flex flex-1 overflow-hidden">
         <SourceSidebar />
-        <LayerPanel />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-hidden p-4">
-            <PreviewCanvas />
+          <div className="flex flex-1 overflow-hidden">
+            <div className="flex min-w-0 flex-1 basis-0 flex-col overflow-hidden">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-neutral-900 px-3 py-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Viewer</h2>
+                  <button
+                    onClick={toggleOutputAdjust}
+                    className={`flex items-center gap-1 rounded px-2 py-1 text-[10px] font-semibold ${
+                      outputAdjustOpen
+                        ? 'bg-cyan-600/20 text-cyan-300'
+                        : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                    }`}
+                  >
+                    <SlidersHorizontal className="h-3 w-3" />
+                    ปรับ OUTPUT
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-hidden">
+                  <PreviewCanvas />
+                </div>
+              </div>
+              <PlaybackControls />
+            </div>
+            <TakeControls />
+            <ProgramMonitorPanel />
           </div>
-          <PlaybackControls />
-          <OutputAdjustPanel />
           <QueuePanel />
         </div>
-        <ProgramMonitorPanel />
       </div>
+      {/* Floats above everything on its own layer instead of sitting in the
+          Viewer column's layout flow — see uiStore.ts for why. */}
+      {outputAdjustOpen && <OutputAdjustPanel />}
     </div>
   )
 }

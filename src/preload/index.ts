@@ -2,9 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { pathToFileURL } from 'url'
 import { electronAPI } from '@electron-toolkit/preload'
 import { IPC_CHANNELS } from '@common/ipc-channels'
-import type { Layer, ProgramUpdatePayload, TimecodeSyncPayload } from '@common/types/scene'
+import type { ProgramUpdatePayload, TimecodeSyncPayload } from '@common/types/scene'
 import type { MediaItem } from '@common/types/media'
-import type { Preset } from '@common/types/preset'
 import type { CanvasResolution } from '@common/types/settings'
 import type { DisplayInfo, OutputStatus } from '@common/types/display'
 import type { CaptureSourceList } from '@common/types/capture'
@@ -60,13 +59,6 @@ const freshAPI = {
     return () => ipcRenderer.removeListener(IPC_CHANNELS.MEDIA_LIBRARY_UPDATE, listener)
   },
 
-  listPresets: (): Promise<Preset[]> => ipcRenderer.invoke(IPC_CHANNELS.PRESET_LIST),
-
-  savePresetSlot: (slot: number, layers: Layer[]): Promise<Preset> =>
-    ipcRenderer.invoke(IPC_CHANNELS.PRESET_SAVE, slot, layers),
-
-  clearPresetSlot: (slot: number): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.PRESET_CLEAR, slot),
-
   sendSetBlack: (black: boolean): void => {
     ipcRenderer.send(IPC_CHANNELS.OUTPUT_SET_BLACK, black)
   },
@@ -112,6 +104,9 @@ const freshAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.OUTPUT_ACTIVATE, displayId),
 
   deactivateOutput: (): Promise<OutputStatus> => ipcRenderer.invoke(IPC_CHANNELS.OUTPUT_DEACTIVATE),
+
+  setOutputHidden: (hidden: boolean): Promise<OutputStatus> =>
+    ipcRenderer.invoke(IPC_CHANNELS.OUTPUT_SET_HIDDEN, hidden),
 
   onOutputStatusUpdate: (callback: (status: OutputStatus) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, status: OutputStatus): void => callback(status)

@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import { Link2, Plus } from 'lucide-react'
-import { useResolutionStore } from '@shared/store/resolutionStore'
 import { useSceneStore } from '@shared/store/sceneStore'
+import { isStreamUrl, normalizeWebUrl } from '@shared/utils/webUrl'
 
 export function UrlSourcePanel(): JSX.Element {
   const [url, setUrl] = useState('')
-  const addUrlLayer = useSceneStore((s) => s.addUrlLayer)
-  const canvasWidth = useResolutionStore((s) => s.width)
-  const canvasHeight = useResolutionStore((s) => s.height)
+  const setActiveSource = useSceneStore((s) => s.setActiveSource)
 
   function handleAdd(): void {
     const trimmed = url.trim()
     if (!trimmed) return
-    addUrlLayer(trimmed, canvasWidth / 2, canvasHeight / 2)
+    const isStream = isStreamUrl(trimmed)
+    setActiveSource({
+      name: isStream ? 'Stream' : 'Webpage',
+      sourceType: isStream ? 'stream' : 'webview',
+      url: isStream ? trimmed : normalizeWebUrl(trimmed)
+    })
     setUrl('')
   }
 

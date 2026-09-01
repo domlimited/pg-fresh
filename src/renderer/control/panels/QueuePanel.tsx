@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { Film, Image as ImageIcon, Play, Repeat, SkipForward, Trash2 } from 'lucide-react'
 import type { MediaItem } from '@common/types/media'
-import { previewVideoRegistry } from '@shared/canvas-engine/videoRegistry'
-import { QUEUE_LAYER_ID } from '@shared/canvas-engine/constants'
+import { programVideoRegistry } from '@shared/canvas-engine/videoRegistry'
+import { ACTIVE_LAYER_ID } from '@shared/canvas-engine/constants'
 import { useQueueStore } from '@shared/store/queueStore'
 import { toMediaUrl } from '@shared/utils/mediaUrl'
-import { advanceQueue, playQueueIndex } from '../actions/queueActions'
+import { advanceQueue, loadQueueIndex, sendQueueIndexLive } from '../actions/queueActions'
 
 const MEDIA_DRAG_TYPE = 'application/x-fresh-media'
 const IMAGE_DWELL_MS = 5000
@@ -24,7 +24,10 @@ export function QueuePanel(): JSX.Element {
 
   // Drives auto-advance by polling instead of an 'ended' listener — the
   // queue's video element mounts/unmounts across renders and a listener
-  // attached in this component would race that lifecycle.
+  // attached in this component would race that lifecycle. Polls the LIVE
+  // (program) video element, not the Viewer's preview one — currentIndex
+  // means "what's live", so advancing must react to the live clip ending,
+  // not whatever the operator happens to be previewing at the time.
   useEffect(() => {
     if (!autoAdvance || currentIndex === null) return
     const currentItem = items[currentIndex]
@@ -36,7 +39,7 @@ export function QueuePanel(): JSX.Element {
     }
 
     const interval = setInterval(() => {
-      const el = previewVideoRegistry.get(QUEUE_LAYER_ID)
+      const el = programVideoRegistry.get(ACTIVE_LAYER_ID)
       if (el?.ended) advanceQueue()
     }, VIDEO_END_POLL_MS)
     return () => clearInterval(interval)
@@ -108,8 +111,9 @@ export function QueuePanel(): JSX.Element {
                     setDragOverIndex(index)
                   }}
                   onDrop={() => handleItemDrop(index)}
-                  onDoubleClick={() => playQueueIndex(index)}
-                  title={item.name}
+                  onClick={() => loadQueueIndex(index)}
+                  onDoubleClick={() => sendQueueIndexLive(index)}
+                  title={`${item.name} — คลิกเพื่อพรีวิว, ดับเบิลคลิกเพื่อส่งออกอากาศ`}
                   className={`relative flex w-28 shrink-0 cursor-grab flex-col overflow-hidden rounded border bg-neutral-950 ${
                     isCurrent
                       ? 'border-cyan-400'

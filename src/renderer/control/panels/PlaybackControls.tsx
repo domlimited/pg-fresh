@@ -13,10 +13,8 @@ interface AudioDevice {
 }
 
 export function PlaybackControls(): JSX.Element {
-  const layers = useSceneStore((s) => s.layers)
-  const selectedLayerId = useSceneStore((s) => s.selectedLayerId)
+  const layer = useSceneStore((s) => s.layers[0])
   const updateLayer = useSceneStore((s) => s.updateLayer)
-  const layer = layers.find((l) => l.id === selectedLayerId)
 
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
   const [currentTime, setCurrentTime] = useState(0)
@@ -62,7 +60,7 @@ export function PlaybackControls(): JSX.Element {
   if (!layer) {
     return (
       <div className="flex h-11 shrink-0 items-center border-t border-neutral-800 bg-neutral-900 px-4 text-xs text-neutral-600">
-        Select a layer to see audio/playback controls
+        เลือกแหล่งภาพจากด้านซ้ายหรือคิว เพื่อดูปุ่มควบคุมเสียง/การเล่น
       </div>
     )
   }
@@ -73,7 +71,7 @@ export function PlaybackControls(): JSX.Element {
   if (!audioCapable && !isVideo) {
     return (
       <div className="flex h-11 shrink-0 items-center border-t border-neutral-800 bg-neutral-900 px-4 text-xs text-neutral-600">
-        No audio/playback controls for this layer type
+        แหล่งภาพประเภทนี้ไม่มีปุ่มควบคุมเสียง/การเล่น
       </div>
     )
   }

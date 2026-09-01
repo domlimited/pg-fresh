@@ -1,7 +1,8 @@
-import { RotateCcw } from 'lucide-react'
+import { RotateCcw, X } from 'lucide-react'
 import type { FitMode } from '@common/types/scene'
 import { useSceneStore } from '@shared/store/sceneStore'
 import { useResolutionStore } from '@shared/store/resolutionStore'
+import { useUiStore } from '@shared/store/uiStore'
 
 const ASPECT_RATIOS: { label: string; ratio: number | null }[] = [
   { label: '16:9', ratio: 16 / 9 },
@@ -18,23 +19,14 @@ const FIT_MODES: { id: FitMode; label: string }[] = [
 ]
 
 export function OutputAdjustPanel(): JSX.Element {
-  const layers = useSceneStore((s) => s.layers)
-  const selectedLayerId = useSceneStore((s) => s.selectedLayerId)
+  const layer = useSceneStore((s) => s.layers[0])
   const updateLayer = useSceneStore((s) => s.updateLayer)
   const canvasWidth = useResolutionStore((s) => s.width)
-  const layer = layers.find((l) => l.id === selectedLayerId)
+  const closeOutputAdjust = useUiStore((s) => s.closeOutputAdjust)
 
-  if (!layer) {
-    return (
-      <div className="shrink-0 border-t border-neutral-800 bg-neutral-900 px-4 py-3 text-xs text-neutral-600">
-        เลือก Layer บน Canvas เพื่อปรับ Output ก่อนส่ง
-      </div>
-    )
-  }
-
-  const scalePercent = Math.round((layer.width / canvasWidth) * 1000) / 10
-  const aspect = layer.width / layer.height
-  const crop = layer.crop ?? { top: 0, right: 0, bottom: 0, left: 0 }
+  const scalePercent = layer ? Math.round((layer.width / canvasWidth) * 1000) / 10 : 100
+  const aspect = layer ? layer.width / layer.height : 16 / 9
+  const crop = layer?.crop ?? { top: 0, right: 0, bottom: 0, left: 0 }
 
   function setScalePercent(percent: number): void {
     if (!layer) return
@@ -68,18 +60,42 @@ export function OutputAdjustPanel(): JSX.Element {
   }
 
   return (
-    <div className="shrink-0 space-y-3 border-t border-neutral-800 bg-neutral-900 px-4 py-3">
+    // Fixed/floating overlay, deliberately outside the Viewer column's flex
+    // flow (rendered as a sibling at the App root) — see uiStore.ts: this
+    // panel used to sit inside the Viewer column and eat into its available
+    // height, making the Viewer and Program monitor render at different
+    // sizes even though both were internally correct. Floating it removes
+    // that layout coupling entirely.
+    <div
+      className="fixed bottom-4 right-4 z-40 max-h-[80vh] w-80 space-y-3 overflow-y-auto rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3 shadow-2xl"
+    >
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">ปรับ OUTPUT ก่อนส่ง</h3>
-        <button
-          onClick={reset}
-          className="flex items-center gap-1 rounded bg-neutral-800 px-2 py-1 text-[10px] text-neutral-300 hover:bg-neutral-700"
-        >
-          <RotateCcw className="h-3 w-3" />
-          รีเซ็ต
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={reset}
+            className="flex items-center gap-1 rounded bg-neutral-800 px-2 py-1 text-[10px] text-neutral-300 hover:bg-neutral-700"
+          >
+            <RotateCcw className="h-3 w-3" />
+            รีเซ็ต
+          </button>
+          <button
+            onClick={closeOutputAdjust}
+            className="rounded bg-neutral-800 p-1 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
+      {!layer && <p className="text-[11px] text-neutral-500">ยังไม่มีแหล่งภาพที่เลือก — เลือกแหล่งก่อนเพื่อปรับค่า</p>}
+
+      {/* Only this content dims when there's no active source, not the
+          panel's own background — dimming the outer container with opacity
+          made its bg-neutral-900 translucent, letting the Queue panel
+          sitting underneath show through and visually collide with these
+          controls (see requirement-v4). */}
+      <div className={`space-y-3 ${layer ? '' : 'pointer-events-none opacity-50'}`}>
       <div className="flex gap-1.5">
         {ASPECT_RATIOS.map((ar) => (
           <button
@@ -109,8 +125,8 @@ export function OutputAdjustPanel(): JSX.Element {
           <span>X</span>
           <input
             type="number"
-            value={Math.round(layer.x)}
-            onChange={(e) => updateLayer(layer.id, { x: Number(e.target.value) })}
+            value={Math.round(layer?.x ?? 0)}
+            onChange={(e) => layer && updateLayer(layer.id, { x: Number(e.target.value) })}
             className="w-full rounded bg-neutral-800 px-2 py-1 text-neutral-100"
           />
         </label>
@@ -118,8 +134,8 @@ export function OutputAdjustPanel(): JSX.Element {
           <span>Y</span>
           <input
             type="number"
-            value={Math.round(layer.y)}
-            onChange={(e) => updateLayer(layer.id, { y: Number(e.target.value) })}
+            value={Math.round(layer?.y ?? 0)}
+            onChange={(e) => layer && updateLayer(layer.id, { y: Number(e.target.value) })}
             className="w-full rounded bg-neutral-800 px-2 py-1 text-neutral-100"
           />
         </label>
@@ -157,9 +173,9 @@ export function OutputAdjustPanel(): JSX.Element {
         {FIT_MODES.map((fm) => (
           <button
             key={fm.id}
-            onClick={() => updateLayer(layer.id, { fit: fm.id })}
+            onClick={() => layer && updateLayer(layer.id, { fit: fm.id })}
             className={`flex-1 rounded px-2 py-1.5 text-xs font-medium ${
-              (layer.fit ?? 'cover') === fm.id
+              (layer?.fit ?? 'cover') === fm.id
                 ? 'bg-cyan-600 text-white'
                 : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
             }`}
@@ -167,6 +183,7 @@ export function OutputAdjustPanel(): JSX.Element {
             {fm.label}
           </button>
         ))}
+      </div>
       </div>
     </div>
   )

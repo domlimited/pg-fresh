@@ -1,14 +1,17 @@
-import { createContext, useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
-
-export const StageScaleContext = createContext(1)
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 interface StageProps {
   width: number
   height: number
   background?: string
   children?: ReactNode
-  onPointerDownEmpty?: () => void
-  onDropAt?: (x: number, y: number, dataTransfer: DataTransfer) => void
+  // 'center' (default) matches the real Output window and Program monitor —
+  // when the container's aspect ratio doesn't exactly match the canvas's,
+  // the letterboxed video sits centered like a real display would. The
+  // Viewer uses 'top' instead so it hugs the panel's top edge and lines up
+  // with Program's box, which never has extra vertical space to center
+  // within (see requirement-v4).
+  verticalAlign?: 'center' | 'top'
 }
 
 export function Stage({
@@ -16,11 +19,9 @@ export function Stage({
   height,
   background = '#000',
   children,
-  onPointerDownEmpty,
-  onDropAt
+  verticalAlign = 'center'
 }: StageProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
-  const innerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
 
   useEffect(() => {
@@ -35,33 +36,47 @@ export function Stage({
     return () => observer.disconnect()
   }, [width, height])
 
-  function handleDrop(e: DragEvent<HTMLDivElement>): void {
-    if (!onDropAt) return
-    e.preventDefault()
-    const rect = innerRef.current?.getBoundingClientRect()
-    if (!rect) return
-    onDropAt((e.clientX - rect.left) / scale, (e.clientY - rect.top) / scale, e.dataTransfer)
-  }
-
   return (
     <div
       ref={containerRef}
-      onPointerDown={onPointerDownEmpty}
-      onDragOver={onDropAt ? (e) => e.preventDefault() : undefined}
-      onDrop={handleDrop}
-      className="flex h-full w-full items-center justify-center overflow-hidden"
+      className={`flex h-full w-full justify-center overflow-hidden ${
+        verticalAlign === 'top' ? 'items-start' : 'items-center'
+      }`}
     >
       <div
-        ref={innerRef}
         style={{
           width,
           height,
+          // Without flexShrink:0, this div's parent (a flex row) shrinks its
+          // *width* to fit the available space before the transform below
+          // ever runs, since flex-shrink defaults to 1 — height is left
+          // alone (cross-axis, unaffected by flex-shrink), so the box's
+          // aspect ratio gets corrupted before scale() even applies,
+          // rendering as a squished sliver instead of the canvas's actual
+          // aspect ratio.
+          flexShrink: 0,
           transform: `scale(${scale})`,
+          // scale() shrinks around transform-origin, which defaults to the
+          // box's own center — that's fine when the box is also centered by
+          // align-items, but for 'top' alignment the untransformed box
+          // (full canvas height, taller than the container) has its center
+          // far below the container's top, so a center-anchored scale would
+          // shrink it toward there and visually push it down/off the
+          // bottom. Anchoring the origin to 'top' instead keeps the box's
+          // top edge fixed at the container's top through the scale.
+          transformOrigin: verticalAlign === 'top' ? 'top center' : 'center',
           background,
-          position: 'relative'
+          position: 'relative',
+          // This div IS the canvas frame (e.g. 1920x1080) — a layer sized or
+          // positioned beyond it (crop/scale/aspect-ratio adjustments can
+          // push x/y negative or width/height past the edge) must be
+          // clipped exactly at this boundary, like a real screen would,
+          // instead of painting outside it into whatever sits around the
+          // Stage visually.
+          overflow: 'hidden'
         }}
       >
-        <StageScaleContext.Provider value={scale || 1}>{children}</StageScaleContext.Provider>
+        {children}
       </div>
     </div>
   )

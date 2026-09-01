@@ -1,6 +1,12 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@common/ipc-channels'
-import { activateOutput, deactivateOutput, getOutputStatus, listDisplays } from '../windows/outputWindow'
+import {
+  activateOutput,
+  deactivateOutput,
+  getOutputStatus,
+  listDisplays,
+  setOutputHidden
+} from '../windows/outputWindow'
 
 export function registerDisplayIpc(): void {
   ipcMain.handle(IPC_CHANNELS.DISPLAY_LIST, () => listDisplays())
@@ -19,4 +25,6 @@ export function registerDisplayIpc(): void {
     deactivateOutput()
     return getOutputStatus()
   })
+
+  ipcMain.handle(IPC_CHANNELS.OUTPUT_SET_HIDDEN, (_event, hidden: boolean) => setOutputHidden(hidden))
 }

@@ -81,10 +81,8 @@ function TransitionGroup(): JSX.Element {
 }
 
 function OutputAudioControl(): JSX.Element {
-  const layers = useSceneStore((s) => s.layers)
-  const selectedLayerId = useSceneStore((s) => s.selectedLayerId)
+  const layer = useSceneStore((s) => s.layers[0])
   const updateLayer = useSceneStore((s) => s.updateLayer)
-  const layer = layers.find((l) => l.id === selectedLayerId)
 
   const volume = layer?.volume ?? 1
   const muted = layer?.muted ?? false
@@ -94,7 +92,7 @@ function OutputAudioControl(): JSX.Element {
     <div className="border-t border-neutral-800 px-3 py-3">
       <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">เสียง OUTPUT</h3>
       {!layer ? (
-        <p className="text-xs text-neutral-600">เลือก Layer เพื่อปรับเสียง</p>
+        <p className="text-xs text-neutral-600">เลือกแหล่งภาพเพื่อปรับเสียง</p>
       ) : (
         <div className="flex items-center gap-2">
           <button

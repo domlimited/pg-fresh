@@ -1,8 +1,7 @@
-import { useEffect, useState, type DragEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { MonitorSmartphone, RefreshCw } from 'lucide-react'
 import type { CaptureSource } from '@common/types/capture'
-
-export const CAPTURE_DRAG_TYPE = 'application/x-fresh-capture'
+import { useSceneStore } from '@shared/store/sceneStore'
 
 interface CapturePanelProps {
   kind: 'screen' | 'window'
@@ -12,6 +11,7 @@ export function CapturePanel({ kind }: CapturePanelProps): JSX.Element {
   const [sources, setSources] = useState<CaptureSource[]>([])
   const [denied, setDenied] = useState(false)
   const [loading, setLoading] = useState(false)
+  const setActiveSource = useSceneStore((s) => s.setActiveSource)
 
   async function refresh(): Promise<void> {
     setLoading(true)
@@ -28,10 +28,6 @@ export function CapturePanel({ kind }: CapturePanelProps): JSX.Element {
     void refresh()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind])
-
-  function handleDragStart(e: DragEvent<HTMLDivElement>, source: CaptureSource): void {
-    e.dataTransfer.setData(CAPTURE_DRAG_TYPE, JSON.stringify({ id: source.id, name: source.name }))
-  }
 
   return (
     <div className="flex h-full flex-col">
@@ -63,10 +59,9 @@ export function CapturePanel({ kind }: CapturePanelProps): JSX.Element {
             {sources.map((source) => (
               <div
                 key={source.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, source)}
+                onClick={() => setActiveSource({ name: source.name, sourceType: 'screen', deviceId: source.id })}
                 title={source.name}
-                className="flex cursor-grab flex-col overflow-hidden rounded border border-neutral-800 bg-neutral-950"
+                className="flex cursor-pointer flex-col overflow-hidden rounded border border-neutral-800 bg-neutral-950 hover:border-cyan-600"
               >
                 <div className="relative flex h-16 items-center justify-center bg-black">
                   {source.thumbnailDataUrl ? (

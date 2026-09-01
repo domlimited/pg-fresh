@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Grid3x3, Plus, Tv } from 'lucide-react'
+import { EyeOff, Plus, Tv } from 'lucide-react'
 import type { DisplayInfo } from '@common/types/display'
-import { useSceneStore } from '@shared/store/sceneStore'
 import { useOutputStatusStore } from '@shared/store/outputStatusStore'
 
 export function TopBar(): JSX.Element {
-  const snapEnabled = useSceneStore((s) => s.snapEnabled)
-  const toggleSnap = useSceneStore((s) => s.toggleSnap)
   const outputActive = useOutputStatusStore((s) => s.active)
+  const outputHidden = useOutputStatusStore((s) => s.hidden)
   const setOutputStatus = useOutputStatusStore((s) => s.setStatus)
 
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
@@ -29,6 +27,10 @@ export function TopBar(): JSX.Element {
 
   async function handleImportClick(): Promise<void> {
     await window.fresh.importMediaDialog()
+  }
+
+  async function handleToggleHidden(): Promise<void> {
+    setOutputStatus(await window.fresh.setOutputHidden(!outputHidden))
   }
 
   async function handleSendToLed(): Promise<void> {
@@ -71,16 +73,18 @@ export function TopBar(): JSX.Element {
 
       <div className="flex-1" />
 
-      <button
-        onClick={toggleSnap}
-        title="Snap to grid"
-        className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs ${
-          snapEnabled ? 'bg-cyan-600/20 text-cyan-300' : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-        }`}
-      >
-        <Grid3x3 className="h-3.5 w-3.5" />
-        Snap
-      </button>
+      {outputActive && (
+        <button
+          onClick={() => void handleToggleHidden()}
+          title="ซ่อนหน้าต่าง Output จากผู้ใช้ (สัญญาณยังส่งอยู่)"
+          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs ${
+            outputHidden ? 'bg-cyan-600/20 text-cyan-300' : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+          }`}
+        >
+          <EyeOff className="h-3.5 w-3.5" />
+          {outputHidden ? 'แสดง Output' : 'ซ่อน Output'}
+        </button>
+      )}
 
       <select
         value={selectedDisplayId ?? ''}

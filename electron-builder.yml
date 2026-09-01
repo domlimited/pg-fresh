@@ -5,6 +5,17 @@ directories:
 files:
   - out/**/*
   - package.json
+# `electron` (see package.json) is castlabs' Widevine-enabled fork, not
+# stock Electron — electron-builder's own downloader defaults to fetching
+# packaging binaries from electron/electron's GitHub releases, where this
+# fork's version tags don't exist (404). Point it at castlabs' releases
+# instead, which mirror the exact same asset naming.
+electronDownload:
+  mirror: 'https://github.com/castlabs/electron-releases/releases/download/v'
+# VMP-signs the Widevine CDM for real DRM license servers (YouTube, etc.) —
+# no-ops safely if castlabs-evs isn't installed/logged in on this machine.
+# See scripts/vmp-sign.cjs.
+afterPack: scripts/vmp-sign.cjs
 asarUnpack:
   - '**/*.node'
   - node_modules/ffmpeg-static/**

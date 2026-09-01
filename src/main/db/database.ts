@@ -46,16 +46,6 @@ function runMigrations(database: Database.Database): void {
     )
   `)
 
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS presets (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      slot INTEGER NOT NULL UNIQUE,
-      layers_json TEXT NOT NULL,
-      created_at INTEGER NOT NULL
-    )
-  `)
-
   // Single-row table (id always 1) holding the project's canvas resolution.
   database.exec(`
     CREATE TABLE IF NOT EXISTS canvas_settings (

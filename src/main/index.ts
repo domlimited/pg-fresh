@@ -1,11 +1,10 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, components } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { initDatabase, closeDatabase } from './db/database'
 import { stopAllStreams } from './media/streamTranscoder'
 import { registerCaptureIpc } from './ipc/capture'
 import { registerDisplayIpc } from './ipc/display'
 import { registerMediaIpc } from './ipc/media'
-import { registerPresetIpc } from './ipc/presets'
 import { registerSceneIpc } from './ipc/scene'
 import { registerSettingsIpc } from './ipc/settings'
 import { registerStreamIpc } from './ipc/stream'
@@ -15,8 +14,48 @@ import { createControlWindow } from './windows/controlWindow'
 
 registerMediaProtocolPrivileges()
 
-app.whenReady().then(() => {
+const WIDEVINE_INSTALL_TIMEOUT_MS = 15_000
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timer)
+        reject(err)
+      }
+    )
+  })
+}
+
+app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.fresh.app')
+
+  // This Electron build is castlabs' Widevine-enabled fork (see
+  // package.json) — installs/updates the Widevine CDM on first launch so
+  // EME-gated playback (YouTube's embedded player, most DASH streams) works
+  // in the "เว็บ / สตรีม" webview layer. Without this, YouTube's player
+  // reports the video as unavailable since Electron ships no DRM support by
+  // default.
+  //
+  // Never let this block/kill the app: a firewalled network, blocked
+  // component-update server, etc. must not stop the LED control window
+  // (unrelated to Widevine) from opening — worst case, YouTube playback
+  // just doesn't work, same as before this was added. A bounded timeout is
+  // required in addition to the try/catch: whenReady() rejecting is caught
+  // fine, but a request that hangs instead of failing (e.g. packets
+  // silently dropped by a firewall) would never resolve OR reject, so
+  // without a timeout the await below — and everything after it, including
+  // createControlWindow() — would hang forever.
+  try {
+    await withTimeout(components.whenReady(), WIDEVINE_INSTALL_TIMEOUT_MS)
+  } catch (err) {
+    console.error('[main] Widevine component install failed — YouTube/DRM playback will not work', err)
+  }
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
@@ -26,7 +65,6 @@ app.whenReady().then(() => {
   initDatabase()
   registerSceneIpc()
   registerMediaIpc()
-  registerPresetIpc()
   registerSettingsIpc()
   registerStreamIpc()
   registerDisplayIpc()

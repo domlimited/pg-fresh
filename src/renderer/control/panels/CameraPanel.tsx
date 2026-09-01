@@ -1,7 +1,6 @@
-import { useEffect, useState, type DragEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { Camera, RefreshCw } from 'lucide-react'
-
-export const CAMERA_DRAG_TYPE = 'application/x-fresh-camera'
+import { useSceneStore } from '@shared/store/sceneStore'
 
 interface CameraDevice {
   deviceId: string
@@ -11,6 +10,7 @@ interface CameraDevice {
 export function CameraPanel(): JSX.Element {
   const [devices, setDevices] = useState<CameraDevice[]>([])
   const [permissionGranted, setPermissionGranted] = useState(false)
+  const setActiveSource = useSceneStore((s) => s.setActiveSource)
 
   async function refreshDevices(): Promise<void> {
     const list = await navigator.mediaDevices.enumerateDevices()
@@ -40,10 +40,6 @@ export function CameraPanel(): JSX.Element {
     }
   }
 
-  function handleDragStart(e: DragEvent<HTMLDivElement>, device: CameraDevice): void {
-    e.dataTransfer.setData(CAMERA_DRAG_TYPE, JSON.stringify(device))
-  }
-
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between px-1 pb-2">
@@ -70,10 +66,9 @@ export function CameraPanel(): JSX.Element {
             {devices.map((device) => (
               <div
                 key={device.deviceId}
-                draggable
-                onDragStart={(e) => handleDragStart(e, device)}
+                onClick={() => setActiveSource({ name: device.label, sourceType: 'camera', deviceId: device.deviceId })}
                 title={device.label}
-                className="flex cursor-grab flex-col items-center justify-center gap-1 rounded border border-neutral-800 bg-neutral-950 p-2"
+                className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded border border-neutral-800 bg-neutral-950 p-2 hover:border-cyan-600"
               >
                 <Camera className="h-5 w-5 text-neutral-500" />
                 <span className="w-full truncate text-center text-[10px] text-neutral-400">{device.label}</span>

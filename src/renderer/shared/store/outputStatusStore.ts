@@ -11,5 +11,6 @@ interface OutputStatusState extends OutputStatus {
 export const useOutputStatusStore = create<OutputStatusState>((set) => ({
   active: false,
   displayId: null,
+  hidden: false,
   setStatus: (status) => set(status)
 }))

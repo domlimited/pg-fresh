@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Pause, Play, Repeat, Scissors, Square, WifiOff } from 'lucide-react'
+import { Pause, Play, Repeat, Square, WifiOff } from 'lucide-react'
 import type { Layer } from '@common/types/scene'
 import { Stage } from '@shared/canvas-engine/Stage'
 import { LayerRenderer } from '@shared/canvas-engine/LayerRenderer'
@@ -9,8 +9,6 @@ import { useResolutionStore } from '@shared/store/resolutionStore'
 import { useOutputStatusStore } from '@shared/store/outputStatusStore'
 import { useSceneStore } from '@shared/store/sceneStore'
 import { formatTime } from '@shared/utils/time'
-import { setBlack, setFreeze } from '../actions/outputActions'
-import { takeProgram } from '../actions/programActions'
 
 // Mirrors output/App.tsx's rendering (same Stage/LayerRenderer, current +
 // crossfading incoming layers, black overlay) but reads the LOCAL
@@ -173,63 +171,37 @@ function ProgramTransport(): JSX.Element {
 }
 
 export function ProgramMonitorPanel(): JSX.Element {
-  const layers = useSceneStore((s) => s.layers)
-  const black = useProgramStore((s) => s.black)
-  const freeze = useProgramStore((s) => s.freeze)
   const outputActive = useOutputStatusStore((s) => s.active)
 
   return (
-    <div className="flex w-96 shrink-0 flex-col overflow-y-auto border-l border-neutral-800 bg-neutral-900 px-3 py-3">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Program (จอ LED)</h2>
-        {!outputActive && (
-          <span className="flex items-center gap-1 text-[10px] text-neutral-600">
-            <WifiOff className="h-3 w-3" />
-            ไม่ได้ส่ง
-          </span>
-        )}
-      </div>
+    // The padding/border/background live on this inner div, not on the flex
+    // item itself (the outer div below) — putting box-model properties
+    // directly on a `flex: 1 1 0%` sibling makes Chromium add them on top of
+    // its equal share instead of counting them within it, so it renders
+    // wider than the Viewer column next to it (see requirement-v4: Program
+    // and Viewer must always split 50/50).
+    <div className="flex min-w-0 flex-1 basis-0 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto border-l border-neutral-800 bg-neutral-900 px-3 py-3">
+        {/* min-h matches Viewer's header row (App.tsx) — that one is taller
+            because of its "ปรับ OUTPUT" button's padding, and this row has
+            no button, so without an explicit floor the two boxes below
+            would start a few px apart instead of lining up. */}
+        <div className="mb-2 flex min-h-[23px] items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Program (จอ LED)</h2>
+          {!outputActive && (
+            <span className="flex items-center gap-1 text-[10px] text-neutral-600">
+              <WifiOff className="h-3 w-3" />
+              ไม่ได้ส่ง
+            </span>
+          )}
+        </div>
 
-      <ProgramStage />
-      <TransformReadout />
+        <ProgramStage />
+        <TransformReadout />
 
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <button
-          onClick={() => takeProgram(layers, 'cut')}
-          className="flex items-center justify-center gap-1.5 rounded-md bg-cyan-600 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
-        >
-          <Scissors className="h-3.5 w-3.5" />
-          CUT (ตัดทันที)
-        </button>
-        <button
-          onClick={() => takeProgram(layers, 'fade')}
-          className="rounded-md bg-neutral-800 py-2 text-sm font-semibold text-neutral-100 hover:bg-neutral-700"
-        >
-          FADE (ค่อยๆเปลี่ยน)
-        </button>
-      </div>
-
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <button
-          onClick={() => setFreeze(!freeze)}
-          className={`rounded-md py-1.5 text-xs font-semibold ${
-            freeze ? 'bg-blue-500 text-white' : 'bg-neutral-800 text-neutral-200 hover:bg-neutral-700'
-          }`}
-        >
-          FREEZE
-        </button>
-        <button
-          onClick={() => setBlack(!black)}
-          className={`rounded-md py-1.5 text-xs font-semibold ${
-            black ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-200 hover:bg-neutral-700'
-          }`}
-        >
-          BLACK
-        </button>
-      </div>
-
-      <div className="mt-2 border-t border-neutral-800">
-        <ProgramTransport />
+        <div className="mt-2 border-t border-neutral-800">
+          <ProgramTransport />
+        </div>
       </div>
     </div>
   )

@@ -14,5 +14,9 @@ resources/thumbnails
 builder-debug.yml
 builder-effective-config.yaml
 
+# Python venv for castlabs EVS (Widevine VMP signing) — local credentials/
+# tooling only, never shared. See scripts/vmp-sign.cjs.
+.evs-venv
+
 # Internal planning/roadmap notes — not meant for the shared repo
 docs/

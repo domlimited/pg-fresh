@@ -4,9 +4,8 @@
 export const DEFAULT_CANVAS_WIDTH = 1920
 export const DEFAULT_CANVAS_HEIGHT = 1080
 
-export const GRID_SIZE = 20
-
-// Fixed id for the full-canvas layer the Queue system drives — reusing one
-// id lets advancing the queue replace this layer in place instead of
-// stacking a new one on every advance.
-export const QUEUE_LAYER_ID = 'queue-layer'
+// Fixed id for the single active-source layer the whole app drives — the
+// Viewer, Program monitor and Output window all key off this one id, so
+// switching sources replaces this layer in place instead of stacking a new
+// one (see sceneStore.setActiveSource()).
+export const ACTIVE_LAYER_ID = 'active-layer'
