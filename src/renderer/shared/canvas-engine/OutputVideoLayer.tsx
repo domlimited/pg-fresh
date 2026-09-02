@@ -32,9 +32,12 @@ export function OutputVideoLayer({ layer, muteAudio = false }: OutputVideoLayerP
     if (!el) return
     el.currentTime = layer.currentTime ?? 0
     if (layer.isPlaying) void el.play()
-    // Deliberately keyed on layer.id only — this sets the initial position
-    // on Take/Cut/Fade; ongoing sync is handled by the effect below.
-  }, [layer.id])
+    // Keyed on loadId, not id: id is the constant ACTIVE_LAYER_ID, so taking
+    // a different clip to Program never re-ran this and the new clip started
+    // at 0, paused, until a drift correction happened to nudge it
+    // (requirement-v5, ปัญหาข้อ 2). This sets the position on Take/Cut/Fade;
+    // ongoing sync is handled by the effect below.
+  }, [layer.loadId])
 
   useEffect(() => {
     const el = ref.current

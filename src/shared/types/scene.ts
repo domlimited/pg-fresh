@@ -11,6 +11,13 @@ export interface LayerCrop {
 
 export interface Layer {
   id: string
+  // Changes on every setActiveSource() call, unlike `id`, which is the fixed
+  // ACTIVE_LAYER_ID shared by every source the switcher loads. Effects that
+  // must re-run when the operator loads different media have to depend on
+  // this — keying them on `id` meant they never re-ran at all, so transport
+  // state stayed pinned to whatever clip was loaded first (requirement-v5,
+  // ปัญหาข้อ 2).
+  loadId: string
   name: string
   sourceType: SourceType
   color?: string
@@ -25,13 +32,17 @@ export interface Layer {
   rotation: number
   opacity: number
   zIndex: number
+  // Measured by ffprobe at import time. <video>.duration is NaN until
+  // metadata arrives and Infinity for live sources, so the transport falls
+  // back to this rather than showing 0:00.
+  durationSec?: number
   loop?: boolean
   isPlaying?: boolean
   currentTime?: number
   volume?: number
   muted?: boolean
   audioOutputId?: string
-  // Undefined means the pre-v3 default: no crop, fit 'cover' — see
+  // Undefined means no crop and fit 'contain' (show the whole frame) — see
   // getMediaObjectFit()/getCropClipPath() in canvas-engine/layerStyle.ts.
   crop?: LayerCrop
   fit?: FitMode

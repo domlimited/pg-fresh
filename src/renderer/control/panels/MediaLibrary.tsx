@@ -1,5 +1,5 @@
 import { useEffect, useState, type DragEvent } from 'react'
-import { FolderOpen, Film, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react'
+import { FolderOpen, Film, Image as ImageIcon, Trash2, X } from 'lucide-react'
 import type { MediaItem } from '@common/types/media'
 import { toMediaUrl } from '@shared/utils/mediaUrl'
 import { useSceneStore } from '@shared/store/sceneStore'
@@ -35,6 +35,10 @@ export function MediaLibrary(): JSX.Element {
     await window.fresh.removeMedia(id)
   }
 
+  async function handleCancelTranscode(id: string): Promise<void> {
+    await window.fresh.cancelTranscode(id)
+  }
+
   return (
     <div onDragOver={(e) => e.preventDefault()} onDrop={handleDrop} className="flex h-full flex-col">
       <div className="flex items-center justify-between px-1 pb-2">
@@ -61,7 +65,13 @@ export function MediaLibrary(): JSX.Element {
                 draggable
                 onDragStart={(e) => handleDragStart(e, item)}
                 onClick={() =>
-                  setActiveSource({ name: item.name, sourceType: item.kind, mediaId: item.id, mediaPath: item.displayPath })
+                  setActiveSource({
+                    name: item.name,
+                    sourceType: item.kind,
+                    mediaId: item.id,
+                    mediaPath: item.displayPath,
+                    durationSec: item.durationSec ?? undefined
+                  })
                 }
                 title={item.name}
                 className="relative flex cursor-pointer flex-col overflow-hidden rounded border border-neutral-800 bg-neutral-950 hover:border-cyan-600"
@@ -78,9 +88,32 @@ export function MediaLibrary(): JSX.Element {
                   ) : (
                     <ImageIcon className="h-6 w-6 text-neutral-600" />
                   )}
+                  {/* Was an indefinite spinner: on a long clip that meant
+                      minutes with no indication of progress or any way out
+                      (requirement-v5, ปัญหาข้อ 3). */}
                   {item.transcodeStatus === 'transcoding' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                      <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/70">
+                      <span className="text-[10px] tabular-nums text-cyan-300">
+                        {item.transcodeProgress === undefined
+                          ? 'กำลังแปลง…'
+                          : `กำลังแปลง ${Math.floor(item.transcodeProgress)}%`}
+                      </span>
+                      <div className="h-1 w-4/5 overflow-hidden rounded bg-neutral-700">
+                        <div
+                          className="h-full bg-cyan-500 transition-[width] duration-300"
+                          style={{ width: `${item.transcodeProgress ?? 0}%` }}
+                        />
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void handleCancelTranscode(item.id)
+                        }}
+                        className="flex items-center gap-0.5 rounded bg-neutral-800/90 px-1.5 py-0.5 text-[9px] text-neutral-300 hover:bg-neutral-700"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                        ยกเลิก
+                      </button>
                     </div>
                   )}
                   {item.transcodeStatus === 'failed' && (

@@ -14,5 +14,9 @@ export interface MediaItem {
   thumbnailPath: string | null
   needsTranscode: boolean
   transcodeStatus: TranscodeStatus
+  // 0-100 while a transcode is running. Deliberately not persisted — it is
+  // meaningless after a restart, and is merged in by the main process (see
+  // withProgress() in main/ipc/media.ts).
+  transcodeProgress?: number
   createdAt: number
 }

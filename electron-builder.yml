@@ -21,7 +21,16 @@ asarUnpack:
   - node_modules/ffmpeg-static/**
   - node_modules/@ffprobe-installer/**
 win:
-  target: nsis
+  # Architectures must be listed explicitly. Without them electron-builder
+  # falls back to the *host* arch, so building from an Apple-silicon Mac
+  # produced an arm64-only Windows installer — leaving every x64 Windows
+  # machine with nothing to install, and packing the x64 ffmpeg.exe that
+  # `npm run fetch:win-binaries` downloads into an arm64 build.
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
 mac:
   target:
     - dmg

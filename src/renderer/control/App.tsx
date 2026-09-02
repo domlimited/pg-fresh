@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
+import type { TimecodeSyncPayload } from '@common/types/scene'
 import { previewVideoRegistry } from '@shared/canvas-engine/videoRegistry'
 import { useSceneStore } from '@shared/store/sceneStore'
 import { useResolutionStore } from '@shared/store/resolutionStore'
@@ -25,23 +26,48 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 function App(): JSX.Element {
   const layers = useSceneStore((s) => s.layers)
+  const loadAdjustments = useSceneStore((s) => s.loadAdjustments)
   const loadResolution = useResolutionStore((s) => s.load)
   const outputAdjustOpen = useUiStore((s) => s.outputAdjustOpen)
   const toggleOutputAdjust = useUiStore((s) => s.toggleOutputAdjust)
+  const lastSyncRef = useRef<Record<string, TimecodeSyncPayload>>({})
 
   useEffect(() => {
     void loadResolution()
   }, [loadResolution])
 
+  useEffect(() => {
+    void loadAdjustments()
+  }, [loadAdjustments])
+
   useEffect(() => window.fresh.onOutputStatusUpdate(useOutputStatusStore.getState().setStatus), [])
 
   useEffect(() => {
+    // Loading different media reuses the same layer id, so a value cached for
+    // the previous clip must not suppress the first tick of the new one.
+    lastSyncRef.current = {}
+
     const interval = setInterval(() => {
       for (const layer of layers) {
         if (layer.sourceType !== 'video') continue
         const el = previewVideoRegistry.get(layer.id)
-        if (!el || el.paused) continue
-        const payload = { layerId: layer.id, currentTime: el.currentTime, isPlaying: true }
+        if (!el) continue
+
+        const payload: TimecodeSyncPayload = {
+          layerId: layer.id,
+          currentTime: el.currentTime,
+          isPlaying: !el.paused
+        }
+
+        // Paused layers used to be skipped outright, so pausing in the Viewer
+        // was never communicated and Program just kept playing — after which
+        // the two could never agree again (requirement-v5, ปัญหาข้อ 2).
+        // Sending unconditionally would spam IPC every 500ms while parked, so
+        // send only when the playhead or the play state actually moved.
+        const last = lastSyncRef.current[layer.id]
+        if (last && last.currentTime === payload.currentTime && last.isPlaying === payload.isPlaying) continue
+        lastSyncRef.current[layer.id] = payload
+
         // Local programStore copy (embedded Program Monitor) and the real
         // Output window (if open) each keep their own OutputVideoLayer
         // decoder for this layer — both need this tick, not just the IPC

@@ -20,7 +20,8 @@ export function loadQueueIndex(index: number): void {
     name: item.name,
     sourceType: item.kind,
     mediaId: item.mediaId,
-    mediaPath: item.mediaPath
+    mediaPath: item.mediaPath,
+    durationSec: item.durationSec ?? undefined
   })
 }
 

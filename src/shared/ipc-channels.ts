@@ -7,6 +7,7 @@ export const IPC_CHANNELS = {
   MEDIA_IMPORT_DIALOG: 'media:import-dialog',
   MEDIA_IMPORT_PATHS: 'media:import-paths',
   MEDIA_REMOVE: 'media:remove',
+  MEDIA_CANCEL_TRANSCODE: 'media:cancel-transcode',
   MEDIA_LIBRARY_UPDATE: 'media:library-update',
   SETTINGS_GET_RESOLUTION: 'settings:get-resolution',
   SETTINGS_SET_RESOLUTION: 'settings:set-resolution',
@@ -18,6 +19,10 @@ export const IPC_CHANNELS = {
   OUTPUT_DEACTIVATE: 'output:deactivate',
   OUTPUT_SET_HIDDEN: 'output:set-hidden',
   OUTPUT_STATUS_UPDATE: 'output:status-update',
+  ADJUSTMENT_LIST: 'adjustment:list',
+  ADJUSTMENT_SAVE: 'adjustment:save',
+  ADJUSTMENT_DELETE: 'adjustment:delete',
   CAPTURE_LIST_SCREENS: 'capture:list-screens',
-  CAPTURE_LIST_WINDOWS: 'capture:list-windows'
+  CAPTURE_LIST_WINDOWS: 'capture:list-windows',
+  CAPTURE_OPEN_PERMISSION_SETTINGS: 'capture:open-permission-settings'
 } as const

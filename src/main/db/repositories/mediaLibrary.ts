@@ -71,3 +71,29 @@ export function updateMedia(id: string, patch: Partial<MediaItem>): void {
 export function deleteMedia(id: string): void {
   getDatabase().prepare(`DELETE FROM media_library WHERE id = ?`).run(id)
 }
+
+// Allow-list check for the media:// protocol handler (see src/main/protocol.ts)
+// — answers "did the operator actually import this file?" for a path that
+// arrived from the renderer, which may be running third-party page content.
+//
+// Windows path comparison is case-insensitive; SQLite's LOWER() only folds
+// ASCII, which is exactly the range where Windows paths differ (drive letter
+// casing, 8.3-style names) — non-ASCII filenames still compare byte-exact,
+// same as on the other platforms.
+export function isKnownMediaPath(absolutePath: string): boolean {
+  const caseInsensitive = process.platform === 'win32'
+  const column = (name: string): string => (caseInsensitive ? `LOWER(${name})` : name)
+  const needle = caseInsensitive ? absolutePath.toLowerCase() : absolutePath
+
+  const row = getDatabase()
+    .prepare(
+      `SELECT 1 FROM media_library
+        WHERE ${column('path')} = @needle
+           OR ${column('display_path')} = @needle
+           OR ${column('thumbnail_path')} = @needle
+        LIMIT 1`
+    )
+    .get({ needle })
+
+  return row !== undefined
+}

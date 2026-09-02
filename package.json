@@ -1,6 +1,6 @@
 {
   "name": "fresh",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "FRESH — LED Screen Media Controller & Presenter",
   "main": "./out/main/index.js",
   "author": "",
@@ -10,6 +10,7 @@
     "build": "electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "verify:media-protocol": "electron scripts/verify-media-protocol.cjs",
     "build:unpack": "electron-vite build && electron-builder --dir --config.npmRebuild=false",
     "build:mac": "electron-vite build && electron-builder --mac --config.npmRebuild=false",
     "fetch:win-binaries": "npm install --no-save --force @ffprobe-installer/win32-x64 && cd node_modules/ffmpeg-static && npm_config_platform=win32 npm_config_arch=x64 node install.js",

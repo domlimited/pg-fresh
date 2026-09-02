@@ -3,7 +3,7 @@ import { Pause, Play, Repeat, Square, Volume2, VolumeX } from 'lucide-react'
 import type { SourceType } from '@common/types/scene'
 import { previewVideoRegistry } from '@shared/canvas-engine/videoRegistry'
 import { useSceneStore } from '@shared/store/sceneStore'
-import { formatTime } from '@shared/utils/time'
+import { formatTime, resolveDuration } from '@shared/utils/time'
 
 const AUDIO_CAPABLE_TYPES: SourceType[] = ['video', 'camera', 'stream', 'webview']
 
@@ -32,12 +32,20 @@ export function PlaybackControls(): JSX.Element {
   }, [])
 
   useEffect(() => {
+    // Wipe the previous clip's readout before anything else. This effect used
+    // to depend on layer.id — the constant ACTIVE_LAYER_ID — so switching
+    // sources neither re-subscribed nor cleared these, and the transport kept
+    // showing the old clip's time and length (requirement-v5, ปัญหาข้อ 2).
+    setCurrentTime(0)
+    setDuration(0)
+    setIsPlaying(false)
+
     if (!layer || layer.sourceType !== 'video') return
     const el = previewVideoRegistry.get(layer.id)
     if (!el) return
 
     const onTimeUpdate = (): void => setCurrentTime(el.currentTime)
-    const onLoadedMetadata = (): void => setDuration(el.duration || 0)
+    const onLoadedMetadata = (): void => setDuration(resolveDuration(el, layer.durationSec))
     const onPlay = (): void => setIsPlaying(true)
     const onPause = (): void => setIsPlaying(false)
 
@@ -46,7 +54,7 @@ export function PlaybackControls(): JSX.Element {
     el.addEventListener('play', onPlay)
     el.addEventListener('pause', onPause)
     setCurrentTime(el.currentTime)
-    setDuration(el.duration || 0)
+    setDuration(resolveDuration(el, layer.durationSec))
     setIsPlaying(!el.paused)
 
     return () => {
@@ -55,7 +63,7 @@ export function PlaybackControls(): JSX.Element {
       el.removeEventListener('play', onPlay)
       el.removeEventListener('pause', onPause)
     }
-  }, [layer?.id, layer?.sourceType])
+  }, [layer?.loadId, layer?.sourceType, layer?.durationSec])
 
   if (!layer) {
     return (

@@ -3,12 +3,13 @@ import { Pause, Play, Repeat, Square, WifiOff } from 'lucide-react'
 import type { Layer } from '@common/types/scene'
 import { Stage } from '@shared/canvas-engine/Stage'
 import { LayerRenderer } from '@shared/canvas-engine/LayerRenderer'
+import { DEFAULT_FIT } from '@shared/canvas-engine/layerStyle'
 import { programVideoRegistry } from '@shared/canvas-engine/videoRegistry'
 import { useProgramStore } from '@shared/store/programStore'
 import { useResolutionStore } from '@shared/store/resolutionStore'
 import { useOutputStatusStore } from '@shared/store/outputStatusStore'
 import { useSceneStore } from '@shared/store/sceneStore'
-import { formatTime } from '@shared/utils/time'
+import { formatTime, resolveDuration } from '@shared/utils/time'
 
 // Mirrors output/App.tsx's rendering (same Stage/LayerRenderer, current +
 // crossfading incoming layers, black overlay) but reads the LOCAL
@@ -72,7 +73,7 @@ function TransformReadout(): JSX.Element {
       </p>
       <p>
         <span className="text-neutral-500">Crop:</span> {cropLabel} | <span className="text-neutral-500">Fit:</span>{' '}
-        {layer.fit ?? 'cover'} | <span className="text-neutral-500">AR:</span> {ar}
+        {layer.fit ?? DEFAULT_FIT} | <span className="text-neutral-500">AR:</span> {ar}
       </p>
       <p className="truncate text-neutral-500">{layer.name}</p>
     </div>
@@ -87,12 +88,18 @@ function ProgramTransport(): JSX.Element {
   const [isPlaying, setIsPlaying] = useState(false)
 
   useEffect(() => {
+    // Same stale-readout fix as PlaybackControls: keyed on loadId, and the
+    // previous clip's numbers are cleared before re-subscribing.
+    setCurrentTime(0)
+    setDuration(0)
+    setIsPlaying(false)
+
     if (!layer) return
     const el = programVideoRegistry.get(layer.id)
     if (!el) return
 
     const onTimeUpdate = (): void => setCurrentTime(el.currentTime)
-    const onLoadedMetadata = (): void => setDuration(el.duration || 0)
+    const onLoadedMetadata = (): void => setDuration(resolveDuration(el, layer.durationSec))
     const onPlay = (): void => setIsPlaying(true)
     const onPause = (): void => setIsPlaying(false)
 
@@ -101,7 +108,7 @@ function ProgramTransport(): JSX.Element {
     el.addEventListener('play', onPlay)
     el.addEventListener('pause', onPause)
     setCurrentTime(el.currentTime)
-    setDuration(el.duration || 0)
+    setDuration(resolveDuration(el, layer.durationSec))
     setIsPlaying(!el.paused)
 
     return () => {
@@ -110,7 +117,7 @@ function ProgramTransport(): JSX.Element {
       el.removeEventListener('play', onPlay)
       el.removeEventListener('pause', onPause)
     }
-  }, [layer?.id])
+  }, [layer?.loadId, layer?.durationSec])
 
   if (!layer) {
     return <div className="px-1 py-2 text-xs text-neutral-600">ยังไม่มีคลิปที่กำลังเล่นอยู่บนโปรแกรม</div>

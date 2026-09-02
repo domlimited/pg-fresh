@@ -31,6 +31,15 @@ export function getOutputWindow(): BrowserWindow | null {
   return outputWindow
 }
 
+// Both callers can fire while Control is being torn down (quitting closes
+// Control, which closes this window, which reports its new status back) —
+// webContents.send() on a destroyed window throws.
+function notifyControlOfOutputStatus(): void {
+  const control = getControlWindow()
+  if (!control || control.isDestroyed()) return
+  control.webContents.send(IPC_CHANNELS.OUTPUT_STATUS_UPDATE, getOutputStatus())
+}
+
 export function getOutputStatus(): OutputStatus {
   return { active: windowActuallyShown, displayId: activeDisplayId, hidden: hiddenByOperator }
 }
@@ -44,6 +53,14 @@ export function listDisplays(): DisplayInfo[] {
     height: d.bounds.height,
     isPrimary: d.id === primary.id
   }))
+}
+
+function resetOutputState(): void {
+  outputWindow = null
+  activeDisplayId = null
+  outputReadyToShow = false
+  hiddenByOperator = false
+  windowActuallyShown = false
 }
 
 function ensureOutputWindow(): BrowserWindow {
@@ -68,12 +85,8 @@ function ensureOutputWindow(): BrowserWindow {
     outputReadyToShow = true
   })
   window.on('closed', () => {
-    outputWindow = null
-    activeDisplayId = null
-    outputReadyToShow = false
-    hiddenByOperator = false
-    windowActuallyShown = false
-    getControlWindow()?.webContents.send(IPC_CHANNELS.OUTPUT_STATUS_UPDATE, getOutputStatus())
+    resetOutputState()
+    notifyControlOfOutputStatus()
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -136,9 +149,12 @@ export function activateOutput(displayId: number): DisplayInfo | null {
     // push the real status once it catches up so TopBar doesn't get stuck
     // showing "ส่งไปจอ LED" as if nothing happened.
     window.once('ready-to-show', () => {
+      // Deactivating (or quitting) before the page finished loading destroys
+      // the window out from under this callback.
+      if (window.isDestroyed()) return
       window.showInactive()
       windowActuallyShown = true
-      getControlWindow()?.webContents.send(IPC_CHANNELS.OUTPUT_STATUS_UPDATE, getOutputStatus())
+      notifyControlOfOutputStatus()
     })
   }
 
@@ -152,12 +168,35 @@ export function activateOutput(displayId: number): DisplayInfo | null {
   }
 }
 
+// Tears the real Output window down for good. Called when the operator stops
+// sending, when the Control window closes, and on quit.
+//
+// This window is frame:false + skipTaskbar:true, so the operator has no way to
+// close it themselves — anything that leaves it alive strands an un-closable
+// window on the LED wall. Worse, an alive-but-hidden window means
+// 'window-all-closed' can never fire, so closing Control left the whole
+// process running with no visible UI (requirement-v5, ปัญหาข้อ 5).
+//
+// destroy(), not close(): 'closed' still fires — which is what resets the
+// module state above — but there is no cancellable 'close' for the output
+// page to intercept.
+export function closeOutputWindow(): void {
+  const window = outputWindow
+  if (!window) return
+  // Reset before destroying, not only in the 'closed' handler: the deactivate
+  // IPC returns getOutputStatus() on the very next line, and it must not
+  // depend on whether Electron emits 'closed' synchronously from destroy().
+  // resetOutputState() is idempotent, so the handler re-running it is fine.
+  resetOutputState()
+  window.destroy()
+}
+
+// The cost of destroying rather than hiding is that the next activation has to
+// load the page again (a few hundred ms). That is already handled: activation
+// waits for 'ready-to-show' before showing anything, so the LED wall never
+// flashes blank — it just goes live a moment later.
 export function deactivateOutput(): void {
-  if (!outputWindow) return
-  outputWindow.hide()
-  activeDisplayId = null
-  hiddenByOperator = false
-  windowActuallyShown = false
+  closeOutputWindow()
 }
 
 // Lets the operator tuck the real Output window away on demand without

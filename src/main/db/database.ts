@@ -57,4 +57,16 @@ function runMigrations(database: Database.Database): void {
   database
     .prepare(`INSERT OR IGNORE INTO canvas_settings (id, width, height) VALUES (1, 1920, 1080)`)
     .run()
+
+  // Per-source "ปรับ OUTPUT ก่อนส่ง" settings, keyed by the stable source key
+  // built in src/shared/types/adjustment.ts. Stored as JSON rather than
+  // columns because the shape is owned by the renderer and expected to grow;
+  // nothing here is ever queried by field.
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS source_adjustments (
+      source_key TEXT PRIMARY KEY,
+      payload TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    )
+  `)
 }

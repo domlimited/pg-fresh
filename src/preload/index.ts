@@ -7,6 +7,7 @@ import type { MediaItem } from '@common/types/media'
 import type { CanvasResolution } from '@common/types/settings'
 import type { DisplayInfo, OutputStatus } from '@common/types/display'
 import type { CaptureSourceList } from '@common/types/capture'
+import type { SourceAdjustment } from '@common/types/adjustment'
 
 const freshAPI = {
   appVersion: (): string => electronAPI.process.versions.electron ?? 'unknown',
@@ -52,6 +53,9 @@ const freshAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.MEDIA_IMPORT_PATHS, paths),
 
   removeMedia: (id: string): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.MEDIA_REMOVE, id),
+
+  cancelTranscode: (id: string): Promise<boolean> =>
+    ipcRenderer.invoke(IPC_CHANNELS.MEDIA_CANCEL_TRANSCODE, id),
 
   onMediaLibraryUpdate: (callback: (items: MediaItem[]) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, items: MediaItem[]): void => callback(items)
@@ -114,9 +118,21 @@ const freshAPI = {
     return () => ipcRenderer.removeListener(IPC_CHANNELS.OUTPUT_STATUS_UPDATE, listener)
   },
 
+  listSourceAdjustments: (): Promise<Record<string, SourceAdjustment>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.ADJUSTMENT_LIST),
+
+  saveSourceAdjustment: (sourceKey: string, adjustment: SourceAdjustment): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.ADJUSTMENT_SAVE, sourceKey, adjustment),
+
+  deleteSourceAdjustment: (sourceKey: string): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.ADJUSTMENT_DELETE, sourceKey),
+
   listScreenSources: (): Promise<CaptureSourceList> => ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_LIST_SCREENS),
 
-  listWindowSources: (): Promise<CaptureSourceList> => ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_LIST_WINDOWS)
+  listWindowSources: (): Promise<CaptureSourceList> => ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_LIST_WINDOWS),
+
+  openScreenPermissionSettings: (): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_OPEN_PERMISSION_SETTINGS)
 }
 
 contextBridge.exposeInMainWorld('electron', electronAPI)

@@ -1,5 +1,6 @@
 import { RotateCcw, X } from 'lucide-react'
 import type { FitMode } from '@common/types/scene'
+import { DEFAULT_FIT } from '@shared/canvas-engine/layerStyle'
 import { useSceneStore } from '@shared/store/sceneStore'
 import { useResolutionStore } from '@shared/store/resolutionStore'
 import { useUiStore } from '@shared/store/uiStore'
@@ -21,6 +22,7 @@ const FIT_MODES: { id: FitMode; label: string }[] = [
 export function OutputAdjustPanel(): JSX.Element {
   const layer = useSceneStore((s) => s.layers[0])
   const updateLayer = useSceneStore((s) => s.updateLayer)
+  const resetAdjustment = useSceneStore((s) => s.resetAdjustment)
   const canvasWidth = useResolutionStore((s) => s.width)
   const closeOutputAdjust = useUiStore((s) => s.closeOutputAdjust)
 
@@ -56,7 +58,7 @@ export function OutputAdjustPanel(): JSX.Element {
 
   function reset(): void {
     if (!layer) return
-    updateLayer(layer.id, { crop: undefined, fit: undefined })
+    resetAdjustment(layer.id)
   }
 
   return (
@@ -175,7 +177,7 @@ export function OutputAdjustPanel(): JSX.Element {
             key={fm.id}
             onClick={() => layer && updateLayer(layer.id, { fit: fm.id })}
             className={`flex-1 rounded px-2 py-1.5 text-xs font-medium ${
-              (layer?.fit ?? 'cover') === fm.id
+              (layer?.fit ?? DEFAULT_FIT) === fm.id
                 ? 'bg-cyan-600 text-white'
                 : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
             }`}

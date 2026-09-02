@@ -8,6 +8,7 @@ export interface QueueItem {
   kind: MediaKind
   mediaPath: string
   thumbnailPath: string | null
+  durationSec: number | null
 }
 
 interface QueueState {
@@ -33,7 +34,8 @@ export const useQueueStore = create<QueueState>((set, get) => ({
       name: media.name,
       kind: media.kind,
       mediaPath: media.displayPath,
-      thumbnailPath: media.thumbnailPath
+      thumbnailPath: media.thumbnailPath,
+      durationSec: media.durationSec
     }
     set({ items: [...get().items, item] })
   },
